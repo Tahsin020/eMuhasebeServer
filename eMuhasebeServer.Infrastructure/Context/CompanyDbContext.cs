@@ -38,7 +38,7 @@ internal sealed class CompanyDbContext : DbContext, IUnitOfWorkCompany
                     .HasConversion(type => type.Value,
                     value => CurrencyTypeEnum.FromValue(value));
         modelBuilder.Entity<CashRegister>()
-            .HasMany(p => p.CashRegisterDetails)
+            .HasMany(p => p.Details)
             .WithOne()
             .HasForeignKey(p => p.CashRegisterId);
         modelBuilder.Entity<CashRegister>().HasQueryFilter(filter => !filter.IsDeleted);
