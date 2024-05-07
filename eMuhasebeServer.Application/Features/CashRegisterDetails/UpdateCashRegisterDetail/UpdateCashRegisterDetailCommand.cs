@@ -7,4 +7,5 @@ public sealed record UpdateCashRegisterDetailCommand(
     Guid CashRegisterId,
     int Type,
     decimal Amount,
-    string Description) : IRequest<Result<string>>;
+    string Description,
+    DateOnly Date) : IRequest<Result<string>>;

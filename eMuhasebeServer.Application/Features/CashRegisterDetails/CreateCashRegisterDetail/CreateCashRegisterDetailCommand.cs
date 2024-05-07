@@ -4,10 +4,10 @@ using TS.Result;
 namespace eMuhasebeServer.Application.Features.CashRegisterDetails.CreateCashRegisterDetail;
 public sealed record CreateCashRegisterDetailCommand(
     Guid CashRegisterId,
-    int Type,
     DateOnly Date,
+    int Type,
     decimal Amount,
-    Guid? CashRegisterDetailId,
+    Guid? OppositeCashRegisterId,
     decimal OppositeAmount,
     string Description
     ) : IRequest<Result<string>>;
