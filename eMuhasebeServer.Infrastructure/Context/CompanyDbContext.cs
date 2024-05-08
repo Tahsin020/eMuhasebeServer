@@ -27,9 +27,13 @@ internal sealed class CompanyDbContext : DbContext, IUnitOfWorkCompany
 
     public DbSet<CashRegister> CashRegisters { get; set; }
     public DbSet<CashRegisterDetail> CashRegisterDetails { get; set; }
+    public DbSet<Bank> Banks { get; set; }
+    public DbSet<BankDetail> BankDetails { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        #region CashRegister
+
         modelBuilder.Entity<CashRegister>().Property(p => p.DepositAmount).HasColumnType("money");
         modelBuilder.Entity<CashRegister>().Property(p => p.WithdrawalAmount).HasColumnType("money");
         modelBuilder.Entity<CashRegister>()
@@ -42,9 +46,35 @@ internal sealed class CompanyDbContext : DbContext, IUnitOfWorkCompany
             .HasForeignKey(p => p.CashRegisterId);
         modelBuilder.Entity<CashRegister>().HasQueryFilter(filter => !filter.IsDeleted);
 
+        #endregion
+
+        #region CashRegisterDetail
+
         modelBuilder.Entity<CashRegisterDetail>().Property(p => p.WithdrawalAmount).HasColumnType("money");
         modelBuilder.Entity<CashRegisterDetail>().Property(p => p.DepositAmount).HasColumnType("money");
         modelBuilder.Entity<CashRegisterDetail>().HasQueryFilter(filter => !filter.IsDeleted);
+
+        #endregion
+
+        #region Bank
+        modelBuilder.Entity<Bank>().Property(p => p.DepositAmount).HasColumnType("money");
+        modelBuilder.Entity<Bank>().Property(p => p.WithdrawalAmount).HasColumnType("money");
+        modelBuilder.Entity<Bank>()
+                    .Property(p => p.CurrencyType)
+                    .HasConversion(type => type.Value,
+                    value => CurrencyTypeEnum.FromValue(value));
+        modelBuilder.Entity<Bank>()
+          .HasMany(p => p.Details)
+          .WithOne()
+          .HasForeignKey(p => p.BankId);
+        modelBuilder.Entity<Bank>().HasQueryFilter(filter => !filter.IsDeleted);
+        #endregion
+
+        #region BankDetail
+        modelBuilder.Entity<BankDetail>().Property(p => p.WithdrawalAmount).HasColumnType("money");
+        modelBuilder.Entity<BankDetail>().Property(p => p.DepositAmount).HasColumnType("money");
+        modelBuilder.Entity<BankDetail>().HasQueryFilter(filter => !filter.IsDeleted);
+        #endregion
 
     }
 

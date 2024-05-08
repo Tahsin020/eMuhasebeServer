@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using eMuhasebeServer.Infrastructure.Context;
 
@@ -11,9 +12,11 @@ using eMuhasebeServer.Infrastructure.Context;
 namespace eMuhasebeServer.Infrastructure.Migrations.CompanyDb
 {
     [DbContext(typeof(CompanyDbContext))]
-    partial class CompanyDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240508173424_mg7")]
+    partial class mg7
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -51,46 +54,6 @@ namespace eMuhasebeServer.Infrastructure.Migrations.CompanyDb
                     b.HasKey("Id");
 
                     b.ToTable("Banks");
-                });
-
-            modelBuilder.Entity("eMuhasebeServer.Domain.Entities.BankDetail", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("BankDetailId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid?>("BankDetailOppositeId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<Guid>("BankId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
-
-                    b.Property<decimal>("DepositAmount")
-                        .HasColumnType("money");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<decimal>("WithdrawalAmount")
-                        .HasColumnType("money");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("BankDetailOppositeId");
-
-                    b.HasIndex("BankId");
-
-                    b.ToTable("BankDetails");
                 });
 
             modelBuilder.Entity("eMuhasebeServer.Domain.Entities.CashRegister", b =>
@@ -160,21 +123,6 @@ namespace eMuhasebeServer.Infrastructure.Migrations.CompanyDb
                     b.ToTable("CashRegisterDetails");
                 });
 
-            modelBuilder.Entity("eMuhasebeServer.Domain.Entities.BankDetail", b =>
-                {
-                    b.HasOne("eMuhasebeServer.Domain.Entities.BankDetail", "BankDetailOpposite")
-                        .WithMany()
-                        .HasForeignKey("BankDetailOppositeId");
-
-                    b.HasOne("eMuhasebeServer.Domain.Entities.Bank", null)
-                        .WithMany("Details")
-                        .HasForeignKey("BankId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("BankDetailOpposite");
-                });
-
             modelBuilder.Entity("eMuhasebeServer.Domain.Entities.CashRegisterDetail", b =>
                 {
                     b.HasOne("eMuhasebeServer.Domain.Entities.CashRegisterDetail", "CashRegisterDetailOpposite")
@@ -188,11 +136,6 @@ namespace eMuhasebeServer.Infrastructure.Migrations.CompanyDb
                         .IsRequired();
 
                     b.Navigation("CashRegisterDetailOpposite");
-                });
-
-            modelBuilder.Entity("eMuhasebeServer.Domain.Entities.Bank", b =>
-                {
-                    b.Navigation("Details");
                 });
 
             modelBuilder.Entity("eMuhasebeServer.Domain.Entities.CashRegister", b =>

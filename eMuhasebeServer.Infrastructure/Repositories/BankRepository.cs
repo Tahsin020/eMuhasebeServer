@@ -1,0 +1,9 @@
+﻿using eMuhasebeServer.Domain.Entities;
+using eMuhasebeServer.Domain.Repositories;
+using eMuhasebeServer.Infrastructure.Context;
+using GenericRepository;
+
+namespace eMuhasebeServer.Infrastructure.Repositories;
+internal sealed class BankRepository(CompanyDbContext context) : Repository<Bank, CompanyDbContext>(context), IBankRepository
+{
+}
