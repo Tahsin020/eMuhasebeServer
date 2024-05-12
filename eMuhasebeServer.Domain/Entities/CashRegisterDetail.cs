@@ -8,7 +8,6 @@ public sealed class CashRegisterDetail :Entity
     public decimal WithdrawalAmount { get; set; } //Çıkış
     public DateOnly Date { get; set; }
     public string Description { get; set; } = string.Empty;
-    public Guid? CashRegisterDetailId { get; set; }
-    public CashRegisterDetail? CashRegisterDetailOpposite { get; set; }
-
+    public Guid? CashRegisterDetailOppositeId { get; set; }
+    //public CashRegisterDetail? CashRegisterDetailOpposite { get; set; }
 }

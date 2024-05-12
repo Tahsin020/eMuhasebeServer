@@ -33,10 +33,10 @@ internal sealed class DeleteCashRegisterDetailByIdCommandHandler(
         cashRegister.DepositAmount -= cashRegisterDetail.DepositAmount; 
         cashRegister.WithdrawalAmount -= cashRegisterDetail.WithdrawalAmount;
 
-        if (cashRegisterDetail.CashRegisterDetailId is not null)
+        if (cashRegisterDetail.CashRegisterDetailOppositeId is not null)
         {
             CashRegisterDetail? oppositeCashRegisterDetail = await cashRegisterDetailRepository
-           .GetByExpressionWithTrackingAsync(p => p.Id == cashRegisterDetail.CashRegisterDetailId, cancellationToken);
+           .GetByExpressionWithTrackingAsync(p => p.Id == cashRegisterDetail.CashRegisterDetailOppositeId, cancellationToken);
 
             if (oppositeCashRegisterDetail is null)
             {
