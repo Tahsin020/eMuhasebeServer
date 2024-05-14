@@ -7,6 +7,10 @@ using TS.Result;
 namespace eMuhasebeServer.Application.Features.BankDetails.DeleteBankDetailById;
 
 internal sealed class DeleteBankDetailByIdCommandHandler(
+    ICustomerDetailRepository customerDetailRepository,
+    ICustomerRepository customerRepository,
+    ICashRegisterRepository cashRegisterRepository,
+    ICashRegisterDetailRepository cashRegisterDetailRepository,
     IBankRepository bankRepository,
     IBankDetailRepository bankDetailRepository,
     IUnitOfWorkCompany unitOfWorkCompany,
@@ -35,13 +39,13 @@ internal sealed class DeleteBankDetailByIdCommandHandler(
         bank.DepositAmount -= bankDetail.DepositAmount;
         bank.WithdrawalAmount -= bankDetail.WithdrawalAmount;
 
-        if (bankDetail.BankDetailOppositeId is not null)
+        if (bankDetail.BankDetailId is not null)
         {
             BankDetail? oppositeBankDetail =
             await bankDetailRepository
-            .GetByExpressionWithTrackingAsync(p => p.Id == bankDetail.BankDetailOppositeId, cancellationToken);
+            .GetByExpressionWithTrackingAsync(p => p.Id == bankDetail.BankDetailId, cancellationToken);
 
-            if (bankDetail is null)
+            if (oppositeBankDetail is null)
             {
                 return Result<string>.Failure("Banka hareketi bulunamadı");
             }
@@ -50,7 +54,7 @@ internal sealed class DeleteBankDetailByIdCommandHandler(
             await bankRepository
             .GetByExpressionWithTrackingAsync(p => p.Id == oppositeBankDetail.BankId, cancellationToken);
 
-            if (bank is null)
+            if (oppositeBank is null)
             {
                 return Result<string>.Failure("Banka bulunamadı");
             }
@@ -61,11 +65,61 @@ internal sealed class DeleteBankDetailByIdCommandHandler(
             bankDetailRepository.Delete(oppositeBankDetail);
         }
 
+        if (bankDetail.CashRegisterDetailId is not null)
+        {
+            CashRegisterDetail? oppositeCashRegisterDetail = await cashRegisterDetailRepository
+           .GetByExpressionWithTrackingAsync(p => p.Id == bankDetail.CashRegisterDetailId, cancellationToken);
+
+            if (oppositeCashRegisterDetail is null)
+            {
+                return Result<string>.Failure("Kasa hareketi bulunamadı");
+            }
+
+            CashRegister? oppositeCashRegister = await cashRegisterRepository
+            .GetByExpressionWithTrackingAsync(p => p.Id == oppositeCashRegisterDetail.CashRegisterId, cancellationToken);
+
+            if (oppositeCashRegister is null)
+            {
+                return Result<string>.Failure("Kasa bulunamadı");
+            }
+
+            oppositeCashRegister.DepositAmount -= oppositeCashRegisterDetail.DepositAmount;
+            oppositeCashRegister.WithdrawalAmount -= oppositeCashRegisterDetail.WithdrawalAmount;
+
+            cashRegisterDetailRepository.Delete(oppositeCashRegisterDetail);
+            cacheService.Remove("cashRegisters");
+        }
+
+        if (bankDetail.CustomerDetailId is not null)
+        {
+            CustomerDetail? customerDetail = await customerDetailRepository
+           .GetByExpressionWithTrackingAsync(p => p.Id == bankDetail.CustomerDetailId, cancellationToken);
+
+            if (customerDetail is null)
+            {
+                return Result<string>.Failure("Cari hareketi bulunamadı");
+            }
+            Customer? customer = await customerRepository
+            .GetByExpressionWithTrackingAsync(p => p.Id == customerDetail.CustomerId, cancellationToken);
+
+            if (customer is null)
+            {
+                return Result<string>.Failure("Cari bulunamadı");
+            }
+
+            customer.DepositAmount -= customerDetail.DepositAmount;
+            customer.WithdrawalAmount -= customerDetail.WithdrawalAmount;
+
+            customerDetailRepository.Delete(customerDetail);
+            cacheService.Remove("customers");
+        }
+
         bankDetailRepository.Delete(bankDetail);
 
         await unitOfWorkCompany.SaveChangesAsync(cancellationToken);
 
         cacheService.Remove("banks");
+        cacheService.Remove("cashRegisters");
 
         return "Banka hareketi başarıyla silindi";
     }

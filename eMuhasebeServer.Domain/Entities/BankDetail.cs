@@ -8,6 +8,8 @@ public sealed class BankDetail : Entity
     public decimal WithdrawalAmount { get; set; } //Çıkış
     public DateOnly Date { get; set; }
     public string Description { get; set; } = string.Empty;
-    public Guid? BankDetailOppositeId { get; set; }
-    //public BankDetail? BankDetailOpposite { get; set; }
+    public Guid? BankDetailId { get; set; }
+    public Guid? CashRegisterDetailId { get; set; }
+    public Guid? CustomerDetailId { get; set; }
+
 }
