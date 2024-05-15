@@ -15,19 +15,20 @@ internal sealed class CreateInvoiceCommandHandler(
     ICustomerRepository customerRepository,
     ICustomerDetailRepository customerDetailRepository,
     IUnitOfWorkCompany unitOfWorkCompany,
-    IMapper mapper,
-    ICacheService cacheService) : IRequestHandler<CreateInvoiceCommand, Result<string>>
+    ICacheService cacheService,
+    IMapper mapper) : IRequestHandler<CreateInvoiceCommand, Result<string>>
 {
     public async Task<Result<string>> Handle(CreateInvoiceCommand request, CancellationToken cancellationToken)
     {
-        #region Invoice and InvoiceDetail
+        #region Fatura ve detay
         Invoice invoice = mapper.Map<Invoice>(request);
-        await invoiceRepository.AddAsync(invoice);
 
+        await invoiceRepository.AddAsync(invoice, cancellationToken);
         #endregion
 
         #region Customer
-        Customer? customer = await customerRepository.GetByExpressionWithTrackingAsync(p => p.Id == request.CustomerId, cancellationToken);
+        Customer? customer = await customerRepository.GetByExpressionAsync(p => p.Id == request.CustomerId, cancellationToken);
+
         if (customer is null)
         {
             return Result<string>.Failure("Müşteri bulunamadı");
@@ -36,51 +37,53 @@ internal sealed class CreateInvoiceCommandHandler(
         customer.DepositAmount += request.TypeValue == 2 ? invoice.Amount : 0;
         customer.WithdrawalAmount += request.TypeValue == 1 ? invoice.Amount : 0;
 
+        customerRepository.Update(customer);
+
         CustomerDetail customerDetail = new()
         {
             CustomerId = customer.Id,
             Date = request.Date,
             DepositAmount = request.TypeValue == 2 ? invoice.Amount : 0,
             WithdrawalAmount = request.TypeValue == 1 ? invoice.Amount : 0,
-            Description = invoice.InvoiceNumber + " numaralı " + invoice.Type.Name,
+            Description = invoice.InvoiceNumber + " Numaralı " + invoice.Type.Name,
             Type = request.TypeValue == 1 ? CustomerDetailTypeEnum.PurchaseInvoice : CustomerDetailTypeEnum.SellingInvoice,
             InvoiceId = invoice.Id
         };
 
         await customerDetailRepository.AddAsync(customerDetail, cancellationToken);
-        await unitOfWorkCompany.SaveChangesAsync(cancellationToken);
         #endregion
 
-        #region Product
-
-        foreach (var item in request.InvoiceDetails)
+        #region Product        
+        foreach (var item in request.Details)
         {
-            Product product = await productRepository.GetByExpressionWithTrackingAsync(p => p.Id == item.ProductId, cancellationToken);
+            Product product = await productRepository.GetByExpressionAsync(p => p.Id == item.ProductId, cancellationToken);
+
             product.Deposit += request.TypeValue == 1 ? item.Quantity : 0;
             product.Withdrawal += request.TypeValue == 2 ? item.Quantity : 0;
+
+            productRepository.Update(product);
 
             ProductDetail productDetail = new()
             {
                 ProductId = product.Id,
                 Date = request.Date,
-                Description = invoice.InvoiceNumber + " numaralı " + invoice.Type.Name,
+                Description = invoice.InvoiceNumber + " Numaralı " + invoice.Type.Name,
                 Deposit = request.TypeValue == 1 ? item.Quantity : 0,
                 Withdrawal = request.TypeValue == 2 ? item.Quantity : 0,
-                InvoiceId = invoice.Id
+                InvoiceId = invoice.Id,
+                Price = item.Price
             };
 
-            await productRepository.AddAsync(product, cancellationToken);
             await productDetailRepository.AddAsync(productDetail, cancellationToken);
         }
         #endregion
 
         await unitOfWorkCompany.SaveChangesAsync(cancellationToken);
 
-        cacheService.Remove("purchaseInvoices");
-        cacheService.Remove("sellingInvoices");
+        cacheService.Remove("invoices");
         cacheService.Remove("customers");
         cacheService.Remove("products");
 
-        return invoice.Type.Name + " Faturası başarıyla tamamlandı";
+        return invoice.Type.Name + " kaydı başarıyla tamamlandı";
     }
 }

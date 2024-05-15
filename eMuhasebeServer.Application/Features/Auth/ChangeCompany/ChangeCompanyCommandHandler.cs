@@ -15,7 +15,8 @@ internal sealed class ChangeCompanyCommandHandler(
     ICompanyUserRepository companyUserRepository,
     UserManager<AppUser> userManager,
     IHttpContextAccessor httpContextAccessor,
-    IJwtProvider jwtProvider) : IRequestHandler<ChangeCompanyCommand, Result<LoginCommandResponse>>
+    IJwtProvider jwtProvider,
+     ICacheService cacheService) : IRequestHandler<ChangeCompanyCommand, Result<LoginCommandResponse>>
 {
     public async Task<Result<LoginCommandResponse>> Handle(ChangeCompanyCommand request, CancellationToken cancellationToken)
     {
@@ -32,16 +33,12 @@ internal sealed class ChangeCompanyCommandHandler(
         }
 
         AppUser? appUser = await userManager.FindByIdAsync(userIdString);
-
         if (appUser is null)
         {
             return Result<LoginCommandResponse>.Failure("Kullanıcı bulunamadı");
         }
 
-        List<CompanyUser> companyUsers = await companyUserRepository
-            .Where(p => p.AppUserId == appUser.Id)
-            .Include(c => c.Company)
-            .ToListAsync(cancellationToken);
+        List<CompanyUser> companyUsers = await companyUserRepository.Where(p => p.AppUserId == appUser.Id).Include(p => p.Company).ToListAsync(cancellationToken);
 
         List<Company> companies = companyUsers.Select(s => new Company
         {
@@ -49,10 +46,12 @@ internal sealed class ChangeCompanyCommandHandler(
             Name = s.Company!.Name,
             TaxDepartment = s.Company!.TaxDepartment,
             TaxNumber = s.Company!.TaxNumber,
-            FullAddress = s.Company!.FullAddress
+            FullAddress = s.Company!.FullAddress,
         }).ToList();
 
         var response = await jwtProvider.CreateToken(appUser, request.CompanyId, companies);
+
+        cacheService.RemoveAll();
 
         return response;
     }

@@ -2,11 +2,12 @@
 using Microsoft.Extensions.Caching.Memory;
 
 namespace eMuhasebeServer.Infrastructure.Services;
-internal sealed class MemoryCacheService(IMemoryCache cache) : ICacheService
+internal sealed class MemoryCacheService(
+    IMemoryCache cache) : ICacheService
 {
     public T? Get<T>(string key)
     {
-        cache.TryGetValue<T>(key, out var value);
+        var result = cache.TryGetValue<T>(key, out var value);
 
         return value;
     }
@@ -14,6 +15,7 @@ internal sealed class MemoryCacheService(IMemoryCache cache) : ICacheService
     public bool Remove(string key)
     {
         cache.Remove(key);
+
         return true;
     }
 
@@ -25,5 +27,21 @@ internal sealed class MemoryCacheService(IMemoryCache cache) : ICacheService
         };
 
         cache.Set<T>(key, value, cacheEntryOptions);
+    }
+
+    public void RemoveAll()
+    {
+        List<string> keys = new()
+        {
+            "cashRegisters",
+            "banks",
+            "invoices",
+            "products",
+            "customers"
+        };
+        foreach (var key in keys)
+        {
+            cache.Remove(key);
+        }
     }
 }

@@ -14,12 +14,20 @@ internal sealed class GetAllInvoicesQueryHandler(
     public async Task<Result<List<Invoice>>> Handle(GetAllInvoicesQuery request, CancellationToken cancellationToken)
     {
         List<Invoice>? invoices;
-        string key = request.Type == 1 ? "purchaseInvoices" : "sellingInvoices";
+
+        string key = "invoices";
+
         invoices = cacheService.Get<List<Invoice>>(key);
+
         if (invoices is null)
         {
-            invoices = await invoiceRepository.Where(p => p.Type == request.Type)
-                .OrderBy(p => p.Date).ToListAsync(cancellationToken);
+            invoices = await invoiceRepository
+                            .GetAll()
+                            .Include(p => p.Customer)
+                            .Include(p => p.Details!)
+                            .ThenInclude(p => p.Product)
+                            .OrderBy(p => p.Date)
+                            .ToListAsync(cancellationToken);
 
             cacheService.Set(key, invoices);
         }
